@@ -63,22 +63,30 @@ fi
 # Example agents map: extend as you create more agents
 declare -A AGENTS=(
     [code-reviewer]="Revisor de código rigoroso e educativo"
+    [deep-code-learning-agent]="Analisa padrões de código com aprendizado profundo e sugere melhorias"
+    [performance-analysis]="Analisa performance e identifica gargalos; sugere otimizações"
+    [pragmatic-documentation-agent]="Gera e melhora documentação prática e exemplos de uso"
 )
 
 mkdir -p "$AGENTS_DIR"
 
 download_agent() {
     local name="$1"
-    local file="${name}.agent.md"
+    local file
+    if [[ "$name" == *.md ]]; then
+        file="$name"
+    else
+        file="${name}.agent.md"
+    fi
     local url="${REPO_URL}/.github/agents/${file}"
     local dest="${AGENTS_DIR}/${file}"
 
-    echo "Downloading ${name} from ${url}"
+    echo "Downloading ${file} from ${url}"
     if curl --fail -sS -o "$dest" "$url"; then
         echo -e "${GREEN}Downloaded: ${dest}${NC}"
         return 0
     else
-        echo -e "${RED}Failed to download ${name}${NC}"
+        echo -e "${RED}Failed to download ${file}${NC}"
         rm -f "$dest"
         return 1
     fi
@@ -134,7 +142,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Recompute REPO_URL if user changed via args
 REPO_URL="https://raw.githubusercontent.com/${REPO_USER}/${REPO_NAME}/${REPO_BRANCH}"
 
 echo_header "Repo: ${REPO_USER}/${REPO_NAME}@${REPO_BRANCH}"
@@ -154,9 +161,28 @@ if [[ "$INSTALL_MODE" == "all" ]]; then
         echo "- $k : ${AGENTS[$k]}"
     done
     if confirm "Proceed to download all agents?"; then
-        for k in "${!AGENTS[@]}"; do
-            download_agent "$k" || echo "Failed: $k"
-        done
+        if [ ${#AGENTS[@]} -gt 1 ]; then
+            for k in "${!AGENTS[@]}"; do
+                download_agent "$k" || echo "Failed: $k"
+            done
+        else
+            # try remote listing
+            api_url="https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/.github/agents?ref=${REPO_BRANCH}"
+            echo "Fetching agent list from ${api_url}"
+            files=$(curl -sS --fail "$api_url" || true)
+            if [[ -z "$files" ]]; then
+                echo -e "${YELLOW}Warning: could not fetch remote agent list.${NC}"
+            else
+                mapfile -t remote_files < <(printf "%s" "$files" | grep '"name"' | sed -E 's/.*"name": "([^"]+)".*/\1/' | grep '\.md$' || true)
+                if [ ${#remote_files[@]} -eq 0 ]; then
+                    echo -e "${YELLOW}No agent files found in remote directory.${NC}"
+                else
+                    for f in "${remote_files[@]}"; do
+                        download_agent "$f" || echo "Failed: $f"
+                    done
+                fi
+            fi
+        fi
     else
         echo "Aborted by user"
         exit 1
@@ -164,18 +190,48 @@ if [[ "$INSTALL_MODE" == "all" ]]; then
     exit 0
 fi
 
-# Interactive menu fallback
 echo_header "Interactive agent installer"
 echo "Available agents:"
+
+fetch_remote_agent_list() {
+    api_url="https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/.github/agents?ref=${REPO_BRANCH}"
+    files=$(curl -sS --fail "$api_url" || true)
+    if [[ -z "$files" ]]; then
+        return 1
+    fi
+    mapfile -t remote_files < <(printf "%s" "$files" | grep '"name"' | sed -E 's/.*"name": "([^\"]+)".*/\1/' | grep '\.md$' || true)
+    if [ ${#remote_files[@]} -eq 0 ]; then
+        return 1
+    fi
+    return 0
+}
+
 idx=1
-mapfile -t keys < <(printf "%s\n" "${!AGENTS[@]}" | sort)
-for k in "${keys[@]}"; do
-    echo "  ${idx}. ${k} - ${AGENTS[$k]}"
-    ((idx++))
-done
+agent_files=()
+agent_names=()
+
+if fetch_remote_agent_list; then
+    for f in "${remote_files[@]}"; do
+        display_name="${f%.agent.md}"
+        display_name="${display_name%.md}"
+        echo "  ${idx}. ${display_name} - ${AGENTS[$display_name]:-}"
+        agent_files+=("$f")
+        agent_names+=("$display_name")
+        ((idx++))
+    done
+else
+    mapfile -t keys < <(printf "%s\n" "${!AGENTS[@]}" | sort)
+    for k in "${keys[@]}"; do
+        echo "  ${idx}. ${k} - ${AGENTS[$k]}"
+        agent_files+=("${k}.agent.md")
+        agent_names+=("$k")
+        ((idx++))
+    done
+fi
+
 echo "  0. Cancel"
 
-read -p "Choose an option (0-${#keys[@]}): " choice
+read -p "Choose an option (0-$((idx-1))): " choice
 if [[ "$choice" == "0" ]]; then
     echo "Cancelled"
     exit 0
@@ -185,13 +241,13 @@ if ! [[ "$choice" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 sel_index=$((choice-1))
-sel_name="${keys[$sel_index]:-}"
-if [[ -z "$sel_name" ]]; then
+sel_file="${agent_files[$sel_index]:-}"
+if [[ -z "$sel_file" ]]; then
     echo "Invalid selection"
     exit 1
 fi
 
-download_agent "$sel_name"
+download_agent "$sel_file"
 
 echo_header "Done"
 
