@@ -66,6 +66,8 @@ declare -A AGENTS=(
     [deep-code-learning-agent]="Analisa padrões de código com aprendizado profundo e sugere melhorias"
     [performance-analysis]="Analisa performance e identifica gargalos; sugere otimizações"
     [pragmatic-documentation-agent]="Gera e melhora documentação prática e exemplos de uso"
+    [architeture-pragmatic-agent]="Agente de arquitetura pragmática focado em avaliar decisões técnicas, trade-offs reais e risco futuro"
+    [security-code-agent]="Auditor de segurança que identifica vulnerabilidades e sugere correções"
 )
 
 mkdir -p "$AGENTS_DIR"
