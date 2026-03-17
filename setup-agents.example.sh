@@ -70,6 +70,15 @@ declare -A AGENTS=(
     [security-code-agent]="Auditor de segurança que identifica vulnerabilidades e sugere correções"
 )
 
+declare -A AGENT_FILES=(
+    [code-reviewer]="code-reviewer.agent.md"
+    [deep-code-learning-agent]="deep-code-learning-agent.md"
+    [performance-analysis]="performance-analysis.md"
+    [pragmatic-documentation-agent]="pragmatic-documentation-agent.md"
+    [architeture-pragmatic-agent]="architeture-pragmatic-agent.md"
+    [security-code-agent]="security-code-agent.md"
+)
+
 mkdir -p "$AGENTS_DIR"
 
 download_agent() {
@@ -165,7 +174,7 @@ if [[ "$INSTALL_MODE" == "all" ]]; then
     if confirm "Proceed to download all agents?"; then
         if [ ${#AGENTS[@]} -gt 1 ]; then
             for k in "${!AGENTS[@]}"; do
-                download_agent "$k" || echo "Failed: $k"
+                download_agent "${AGENT_FILES[$k]:-${k}.agent.md}" || echo "Failed: $k"
             done
         else
             # try remote listing
@@ -225,7 +234,7 @@ else
     mapfile -t keys < <(printf "%s\n" "${!AGENTS[@]}" | sort)
     for k in "${keys[@]}"; do
         echo "  ${idx}. ${k} - ${AGENTS[$k]}"
-        agent_files+=("${k}.agent.md")
+        agent_files+=("${AGENT_FILES[$k]:-${k}.agent.md}")
         agent_names+=("$k")
         ((idx++))
     done
