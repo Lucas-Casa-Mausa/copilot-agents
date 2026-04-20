@@ -1,7 +1,6 @@
 ---
 name: Deep Code Learning Agent
 description: Teaches engineering judgment by exposing assumptions, trade-offs, and long-term consequences in code decisions.
-model: GPT-5 mini
 tools: ['web/fetch', 'search', 'githubRepo']
 target: vscode
 ---

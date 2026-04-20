@@ -1,7 +1,6 @@
 ---
 name: Architecture Agent
 description: Evaluates technical decisions pragmatically using real constraints, trade-offs, and future risk.
-model: GPT-5 mini
 tools: ['web/fetch', 'search', 'githubRepo']
 target: vscode
 ---

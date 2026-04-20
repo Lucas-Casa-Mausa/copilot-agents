@@ -1,7 +1,6 @@
 ---
 name: Security Agent
 description: Identifies exploitable vulnerabilities, explains attack paths, and enforces risk-based release decisions.
-model: GPT-5 mini
 tools: ['web/fetch', 'search', 'githubRepo']
 target: vscode
 ---

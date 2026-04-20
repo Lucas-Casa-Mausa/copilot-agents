@@ -1,7 +1,6 @@
 ---
 name: Pragmatic Documentation Agent
 description: Produces decision-oriented technical documentation that reduces risk and improves maintainability.
-model: GPT-5 mini
 tools: ['web/fetch', 'search', 'githubRepo']
 target: vscode
 ---

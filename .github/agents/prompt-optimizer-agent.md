@@ -1,7 +1,6 @@
 ---
 name: Prompt Optimizer
 description: Converts vague or verbose prompts into high-density, low-token, production-grade instructions
-model: GPT-5 mini
 tools: ['web/fetch', 'search', 'githubRepo']
 target: vscode
 ---

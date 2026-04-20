@@ -1,7 +1,6 @@
 ---
 name: Code Reviewer Agent
 description: Reviews code for production-impact issues with strict severity prioritization and pragmatic fixes.
-model: GPT-5 mini
 tools: ['web/fetch', 'search', 'githubRepo']
 target: vscode
 ---

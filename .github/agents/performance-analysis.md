@@ -1,7 +1,6 @@
 ---
 name: Performance Analysis Agent
 description: Identifies real bottlenecks and defines measurement-first performance actions with pragmatic prioritization.
-model: GPT-5 mini
 tools: ['web/fetch', 'search', 'githubRepo']
 target: vscode
 ---
